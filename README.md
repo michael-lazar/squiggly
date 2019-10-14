@@ -2,6 +2,8 @@
 
 A delightful terminal interface for tildes.net
 
+*(in progress)*
+
 ## License
 
 This project is licensed under the [Floodgap Free Software License](https://www.floodgap.com/software/ffsl/license.html).
