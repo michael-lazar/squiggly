@@ -18,8 +18,9 @@ setuptools.setup(
     keywords='terminal console tui curses',
     packages=['squiggly'],
     python_requires='>=3.7',
+    install_requires=['urwid>=2.0.0', 'spinners', 'tildee'],
     extras_require={'test': ['pytest']},
-    entry_points={'console_scripts': ['squiggly=squiggly.__main__:main']},
+    entry_points={'console_scripts': ['squiggly=squiggly.main:main']},
     classifiers=[
         'Intended Audience :: End Users/Desktop',
         'Environment :: Console :: Curses',

@@ -1,3 +1,5 @@
+import squiggly
 
-def test_stub():
-    assert True
+
+def test_dunder_import():
+    assert squiggly.__title__ == 'squiggly'

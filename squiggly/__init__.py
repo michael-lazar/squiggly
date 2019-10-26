@@ -3,4 +3,3 @@ __title__ = 'squiggly'
 __author__ = 'Michael Lazar'
 __license__ = 'Floodgap Free Software License'
 __copyright__ = '(c) 2019 Michael Lazar'
-
