@@ -1,16 +1,16 @@
 import urwid
 
 from squiggly.api import MockClient
-from squiggly.widgets import GroupView
 from squiggly.theme import palette
+from squiggly.widgets import GroupView
 
 
 def main():
     # Add movement using h/j/k/l to default command map
-    urwid.command_map['k'] = urwid.CURSOR_UP
-    urwid.command_map['j'] = urwid.CURSOR_DOWN
-    urwid.command_map['h'] = urwid.CURSOR_LEFT
-    urwid.command_map['l'] = urwid.CURSOR_RIGHT
+    urwid.command_map["k"] = urwid.CURSOR_UP
+    urwid.command_map["j"] = urwid.CURSOR_DOWN
+    urwid.command_map["h"] = urwid.CURSOR_LEFT
+    urwid.command_map["l"] = urwid.CURSOR_RIGHT
 
     client = MockClient()
 
@@ -22,5 +22,5 @@ def main():
     main_loop.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

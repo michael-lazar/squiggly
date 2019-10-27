@@ -28,7 +28,7 @@ import urwid
 def rainbow_background():
     while True:
         for i in range(1, 7):
-            yield urwid.AttrSpec(f'h{i},standout', 'default'), urwid.AttrSpec(f'h{i}', 'default')
+            yield urwid.AttrSpec(f"h{i},standout", "default"), urwid.AttrSpec(f"h{i}", "default")
 
 
 rainbow_background_gen = rainbow_background()
@@ -60,13 +60,11 @@ class SquigglyBaseWidget(urwid.Widget):
 class ListItem(SquigglyBaseWidget, urwid.Text):
     _selectable = True
 
-    signals = [
-        "select"
-    ]
+    signals = ["select"]
 
     def __init__(self, markup, data=None):
         self.data = data
-        super().__init__(markup, wrap='clip')
+        super().__init__(markup, wrap="clip")
 
     def keypress(self, size, key):
         if key == "enter":
@@ -82,9 +80,8 @@ class ListItem(SquigglyBaseWidget, urwid.Text):
 
 
 class Header(SquigglyBaseWidget, urwid.Text):
-
     def __init__(self, markdown):
-        super().__init__(markdown, wrap='clip')
+        super().__init__(markdown, wrap="clip")
 
 
 class InfoBox(SquigglyBaseWidget, urwid.Pile):
@@ -92,9 +89,7 @@ class InfoBox(SquigglyBaseWidget, urwid.Pile):
 
 
 class Sidebar(SquigglyBaseWidget, urwid.ListBox):
-    signals = [
-        "on_focus_change"
-    ]
+    signals = ["on_focus_change"]
 
     def __init__(self, list_walker):
         self.width = max(x.text_width() for x in list_walker) + 1
@@ -102,14 +97,13 @@ class Sidebar(SquigglyBaseWidget, urwid.ListBox):
         super().__init__(list_walker)
 
     def on_focus_change(self, index):
-        self._emit('on_focus_change', self.body[index].data)
+        self._emit("on_focus_change", self.body[index].data)
 
 
 class ContentView(urwid.Columns):
-
     def __init__(self, sidebar, infobox):
         super().__init__([(sidebar.body.width, sidebar), infobox])
-        urwid.connect_signal(sidebar.body, 'on_focus_change', self.set_infobox)
+        urwid.connect_signal(sidebar.body, "on_focus_change", self.set_infobox)
 
     def set_infobox(self, _, data):
         infobox = self.build_infobox(data)
@@ -123,45 +117,43 @@ class ContentView(urwid.Columns):
 
 
 class GroupListItem(ListItem):
-    attr_name = 'group_list_item_normal'
-    focus_name = 'group_list_item_selected'
+    attr_name = "group_list_item_normal"
+    focus_name = "group_list_item_selected"
 
     @classmethod
     def from_data(cls, data):
-        markup = data['name']
+        markup = data["name"]
         return cls(markup, data)
 
 
 class GroupInfoBoxHeader(Header):
-    attr_name = 'group_infobox_header'
+    attr_name = "group_infobox_header"
 
     @classmethod
     def from_data(cls, data):
-        return cls(data['name'])
+        return cls(data["name"])
 
 
 class GroupSidebarHeader(Header):
-    attr_name = 'group_sidebar_header'
+    attr_name = "group_sidebar_header"
 
     def __init__(self):
-        super().__init__('Groups')
+        super().__init__("Groups")
 
 
 class GroupInfoBox(InfoBox):
-    attr_name = 'group_infobox_normal'
-    focus_name = 'group_infobox_selected'
+    attr_name = "group_infobox_normal"
+    focus_name = "group_infobox_selected"
 
     @classmethod
     def from_data(cls, data):
-        widgets = [
-            urwid.Filler(urwid.Text(data['summary']), valign='top'),
-        ]
+        widgets = [urwid.Filler(urwid.Text(data["summary"]), valign="top")]
         return cls(widgets)
 
 
 class GroupSidebar(Sidebar):
-    attr_name = 'group_sidebar_normal'
-    focus_name = 'group_sidebar_selected'
+    attr_name = "group_sidebar_normal"
+    focus_name = "group_sidebar_selected"
 
     @classmethod
     def from_data(cls, data):
@@ -175,7 +167,6 @@ class GroupSidebar(Sidebar):
 
 
 class GroupView(ContentView):
-
     @classmethod
     def build_sidebar(cls, data):
         body = GroupSidebar.from_data(data)

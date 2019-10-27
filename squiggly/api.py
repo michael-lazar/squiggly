@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 
 class MockClient:
@@ -8,11 +8,12 @@ class MockClient:
 
     This is intended to be used for testing and preliminary development.
     """
-    DATA_FILE = os.path.join(os.path.dirname(__file__), 'data.json')
+
+    DATA_FILE = os.path.join(os.path.dirname(__file__), "data.json")
 
     def __init__(self):
         with open(self.DATA_FILE) as fp:
             self._data = json.load(fp)
 
     def list_groups(self):
-        return self._data['groups'] * 4
+        return self._data["groups"] * 4
