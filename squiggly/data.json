@@ -1,0 +1,49 @@
+{
+  "groups": [
+    {
+      "name": "~anime",
+      "summary": "Posts about anime and the related media/genres including TV shows, manga, movies, and games.",
+      "num_subscribers": 9955
+    },
+    {
+      "name": "~arts",
+      "summary": "Articles and discussions about the arts - theatre, drawing, painting, photography, poetry, etc.",
+      "num_subscribers": 11112
+    },
+    {
+      "name": "~books",
+      "summary": "Discussion, news and articles related to books (fiction or non-fiction).",
+      "num_subscribers": 8872
+    },
+    {
+      "name": "~comp",
+      "summary": "Topics focused on the more technical side of computers, things of interest to programmers, sysadmins, etc.",
+      "num_subscribers": 10757
+    },
+    {
+      "name": "~creative",
+      "summary": "Arts, crafts, and other DIY-ish things.",
+      "num_subscribers": 10705
+    },
+    {
+      "name": "~design",
+      "summary": "Topics related to design, both physical (e.g. fashion, architecture, products) and non-physical (e.g. logos, web design, advertising)",
+      "num_subscribers": 9955
+    },
+    {
+      "name": "~enviro",
+      "summary": "Topics related to the environment - conservation, recycling, alternate energy, etc.",
+      "num_subscribers": 10861
+    },
+    {
+      "name": "~games.game_design",
+      "summary": "Articles and discussion about game design including mechanics, environments, audio, and AI.",
+      "num_subscribers": 10801
+    },
+    {
+      "name": "~games.tabletop",
+      "summary": "Topics about tabletop games: board games (both modern and classical), role-playing games, card games, etc.",
+      "num_subscribers": 10800
+    }
+  ]
+}

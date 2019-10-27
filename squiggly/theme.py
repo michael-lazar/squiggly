@@ -1,11 +1,12 @@
 palette = [
-    ('groups_normal', 'default', 'default'),
-    ('groups_selected', 'standout', 'default'),
-    ('groups_header', 'dark cyan,bold,standout', 'default'),
+    ('group_list_item_normal', 'default', 'default'),
+    ('group_list_item_selected', 'standout', 'default'),
 
-    ('topics_normal', 'default', 'default'),
-    ('topics_selected', 'standout', 'default'),
-    ('topics_header', 'dark magenta,bold,standout', 'white'),
+    ('group_sidebar_normal', 'default', 'default'),
+    ('group_sidebar_selected', 'default', 'default'),
+    ('group_sidebar_header', 'white,bold', 'dark cyan'),
 
-    ('sidebar', 'dark blue,bold,standout', 'white')
+    ('group_infobox_normal', 'default', 'default'),
+    ('group_infobox_selected', 'default', 'default'),
+    ('group_infobox_header', 'white,bold', 'dark magenta'),
 ]
