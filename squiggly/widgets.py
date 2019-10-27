@@ -154,7 +154,7 @@ class GroupInfoBox(InfoBox):
     @classmethod
     def from_data(cls, data):
         widgets = [
-            (urwid.Text(data['summary'])),
+            urwid.Filler(urwid.Text(data['summary']), valign='top'),
         ]
         return cls(widgets)
 
