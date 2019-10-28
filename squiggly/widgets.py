@@ -143,7 +143,7 @@ class TopicListItem(ListItem):
         if not data:
             cls("", data)
 
-        markup = data["timestamp"].isoformat(' ')
+        markup = data["timestamp"].isoformat(" ")
         return cls(markup, data)
 
 
@@ -190,7 +190,7 @@ class GroupInfoBox(InfoBox):
     @classmethod
     def from_data(cls, data=None):
         if not data:
-            cls([])
+            return cls([])
 
         widgets = [urwid.Filler(urwid.Text(data["desc"]), valign="top")]
         return cls(widgets)
@@ -260,7 +260,7 @@ class GroupView(ContentView):
     @classmethod
     def from_data(cls, data=None):
         sidebar = cls.build_sidebar(data)
-        infobox = cls.build_infobox()
+        infobox = cls.build_infobox(data[0] if data else None)
         return cls(sidebar, infobox)
 
 
@@ -280,5 +280,5 @@ class TopicView(ContentView):
     @classmethod
     def from_data(cls, data=None):
         sidebar = cls.build_sidebar(data)
-        infobox = cls.build_infobox()
+        infobox = cls.build_infobox(data[0] if data else None)
         return cls(sidebar, infobox)
