@@ -53,7 +53,7 @@ class SquigglyBaseWidget(urwid.Widget):
         return canvas
 
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data=None):
         return cls()
 
 
@@ -91,8 +91,13 @@ class InfoBox(SquigglyBaseWidget, urwid.Pile):
 class Sidebar(SquigglyBaseWidget, urwid.ListBox):
     signals = ["on_focus_change"]
 
+    width_default = 10
+
     def __init__(self, list_walker):
-        self.width = max(x.text_width() for x in list_walker) + 1
+        width_gen = (x.text_width() for x in list_walker)
+        width = max(width_gen, default=self.width_default)
+        self.width = width
+
         list_walker.set_focus_changed_callback(self.on_focus_change)
         super().__init__(list_walker)
 
@@ -121,8 +126,24 @@ class GroupListItem(ListItem):
     focus_name = "group_list_item_selected"
 
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data=None):
+        if not data:
+            cls("", data)
+
         markup = data["name"]
+        return cls(markup, data)
+
+
+class TopicListItem(ListItem):
+    attr_name = "topic_list_item_normal"
+    focus_name = "topic_list_item_selected"
+
+    @classmethod
+    def from_data(cls, data=None):
+        if not data:
+            cls("", data)
+
+        markup = data["timestamp"].isoformat(' ')
         return cls(markup, data)
 
 
@@ -130,8 +151,22 @@ class GroupInfoBoxHeader(Header):
     attr_name = "group_infobox_header"
 
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data=None):
+        if not data:
+            return cls("")
+
         return cls(data["name"])
+
+
+class TopicInfoBoxHeader(Header):
+    attr_name = "topic_infobox_header"
+
+    @classmethod
+    def from_data(cls, data=None):
+        if not data:
+            return cls("")
+
+        return cls(data["title"])
 
 
 class GroupSidebarHeader(Header):
@@ -141,13 +176,37 @@ class GroupSidebarHeader(Header):
         super().__init__("Groups")
 
 
+class TopicSidebarHeader(Header):
+    attr_name = "topic_sidebar_header"
+
+    def __init__(self):
+        super().__init__("Topics")
+
+
 class GroupInfoBox(InfoBox):
     attr_name = "group_infobox_normal"
     focus_name = "group_infobox_selected"
 
     @classmethod
-    def from_data(cls, data):
-        widgets = [urwid.Filler(urwid.Text(data["summary"]), valign="top")]
+    def from_data(cls, data=None):
+        if not data:
+            cls([])
+
+        widgets = [urwid.Filler(urwid.Text(data["desc"]), valign="top")]
+        return cls(widgets)
+
+
+class TopicInfoBox(InfoBox):
+    attr_name = "topic_infobox_normal"
+    focus_name = "topic_infobox_selected"
+
+    @classmethod
+    def from_data(cls, data=None):
+        if not data:
+            return cls([])
+
+        body = data["content"] or data["link"]
+        widgets = [urwid.Filler(urwid.Text(body), valign="top")]
         return cls(widgets)
 
 
@@ -156,7 +215,9 @@ class GroupSidebar(Sidebar):
     focus_name = "group_sidebar_selected"
 
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data=None):
+        data = data or []
+
         list_items = []
         for group_data in data:
             list_item = GroupListItem.from_data(group_data)
@@ -166,21 +227,58 @@ class GroupSidebar(Sidebar):
         return cls(list_walker)
 
 
+class TopicSidebar(Sidebar):
+    attr_name = "topic_sidebar_normal"
+    focus_name = "topic_sidebar_selected"
+
+    @classmethod
+    def from_data(cls, data=None):
+        data = data or []
+
+        list_items = []
+        for group_data in data:
+            list_item = TopicListItem.from_data(group_data)
+            list_items.append(list_item)
+
+        list_walker = urwid.SimpleFocusListWalker(list_items)
+        return cls(list_walker)
+
+
 class GroupView(ContentView):
     @classmethod
-    def build_sidebar(cls, data):
+    def build_sidebar(cls, data=None):
         body = GroupSidebar.from_data(data)
         header = GroupSidebarHeader.from_data(data)
         return urwid.Frame(body, header)
 
     @classmethod
-    def build_infobox(cls, data):
+    def build_infobox(cls, data=None):
         body = GroupInfoBox.from_data(data)
         header = GroupInfoBoxHeader.from_data(data)
         return urwid.Frame(body, header)
 
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data=None):
         sidebar = cls.build_sidebar(data)
-        infobox = cls.build_infobox(data[0])
+        infobox = cls.build_infobox()
+        return cls(sidebar, infobox)
+
+
+class TopicView(ContentView):
+    @classmethod
+    def build_sidebar(cls, data=None):
+        body = TopicSidebar.from_data(data)
+        header = TopicSidebarHeader.from_data(data)
+        return urwid.Frame(body, header)
+
+    @classmethod
+    def build_infobox(cls, data=None):
+        body = TopicInfoBox.from_data(data)
+        header = TopicInfoBoxHeader.from_data(data)
+        return urwid.Frame(body, header)
+
+    @classmethod
+    def from_data(cls, data=None):
+        sidebar = cls.build_sidebar(data)
+        infobox = cls.build_infobox()
         return cls(sidebar, infobox)

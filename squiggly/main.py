@@ -1,8 +1,8 @@
 import urwid
 
-from squiggly.api import MockClient
+from squiggly.api import Client
 from squiggly.theme import palette
-from squiggly.widgets import GroupView
+from squiggly.widgets import GroupView, TopicView
 
 
 def main():
@@ -12,10 +12,13 @@ def main():
     urwid.command_map["h"] = urwid.CURSOR_LEFT
     urwid.command_map["l"] = urwid.CURSOR_RIGHT
 
-    client = MockClient()
+    client = Client()
 
-    group_data_list = client.list_groups()
-    view = GroupView.from_data(group_data_list)
+    # group_data_list = client.list_groups()
+    # view = GroupView.from_data(group_data_list)
+
+    topic_data_list = client.list_topics()
+    view = TopicView.from_data(topic_data_list)
 
     event_loop = urwid.SelectEventLoop()
     main_loop = urwid.MainLoop(view, palette, event_loop=event_loop)

@@ -7,4 +7,12 @@ palette = [
     ("group_infobox_normal", "default", "default"),
     ("group_infobox_selected", "default", "default"),
     ("group_infobox_header", "white,bold", "dark magenta"),
+    ("topic_list_item_normal", "default", "default"),
+    ("topic_list_item_selected", "standout", "default"),
+    ("topic_sidebar_normal", "default", "default"),
+    ("topic_sidebar_selected", "default", "default"),
+    ("topic_sidebar_header", "white,bold", "dark cyan"),
+    ("topic_infobox_normal", "default", "default"),
+    ("topic_infobox_selected", "default", "default"),
+    ("topic_infobox_header", "white,bold", "dark magenta"),
 ]
