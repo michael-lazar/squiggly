@@ -1,7 +1,9 @@
 import urwid
 
+import squiggly
 
-class KeyboardMapper:
+
+class KeyMap:
 
     def __init__(self):
         self.map = {}
@@ -29,13 +31,13 @@ class SquigglyBaseWidget(urwid.Widget):
         applied to the widget's canvas. This provides is a simple alternative
         to needing to wrap the widget with AttrMap() after creating it.
 
-    keyboard_mapper:
+    keymap:
         The keyboard mapper is a lightweight decorator that can be used to bind
         a function to an individual keypress.
     """
     attr_name = None
     focus_name = None
-    keyboard_mapper = KeyboardMapper()
+    keymap = KeyMap()
 
     def render(self, size, focus=False):
         if focus and self.focus_name is not None:
@@ -52,8 +54,8 @@ class SquigglyBaseWidget(urwid.Widget):
         return canvas
 
     def keypress(self, size, key):
-        if key in self.keyboard_mapper:
-            self.keyboard_mapper[key](self)
+        if key in self.keymap:
+            self.keymap[key](self)
         else:
             try:
                 return super().keypress(size, key)
@@ -67,16 +69,11 @@ class SquigglyBaseWidget(urwid.Widget):
 
 class ListItem(SquigglyBaseWidget, urwid.Text):
     _selectable = True
-    keyboard_mapper = KeyboardMapper()
-    signals = ["select"]
+    keymap = KeyMap()
 
     def __init__(self, markup, data=None):
         self.data = data
         super().__init__(markup, wrap="clip")
-
-    @keyboard_mapper.register("enter")
-    def on_enter(self):
-        self._emit("select")
 
     def text_width(self):
         """
@@ -87,7 +84,6 @@ class ListItem(SquigglyBaseWidget, urwid.Text):
 
 class Header(SquigglyBaseWidget, urwid.Text):
     def __init__(self, markdown):
-        self.width = len(markdown) + 1
         super().__init__(markdown, wrap="clip")
 
 
@@ -98,13 +94,7 @@ class InfoBox(SquigglyBaseWidget, urwid.Pile):
 class Sidebar(SquigglyBaseWidget, urwid.ListBox):
     signals = ["on_focus_change"]
 
-    width_default = 10
-
     def __init__(self, list_walker):
-        width_gen = (x.text_width() for x in list_walker)
-        width = max(width_gen, default=self.width_default) + 1
-        self.width = width
-
         list_walker.set_focus_changed_callback(self.on_focus_change)
         super().__init__(list_walker)
 
@@ -114,8 +104,7 @@ class Sidebar(SquigglyBaseWidget, urwid.ListBox):
 
 class ContentView(urwid.Columns):
     def __init__(self, sidebar, infobox):
-        sidebar_with = max((sidebar.body.width, sidebar.header.width))
-        super().__init__([(sidebar_with, sidebar), infobox])
+        super().__init__([(20, sidebar), infobox])
         urwid.connect_signal(sidebar.body, "on_focus_change", self.set_infobox)
 
     def set_infobox(self, _, data):
@@ -138,7 +127,7 @@ class GroupListItem(ListItem):
         if not data:
             cls("", data)
 
-        markup = '~' + data["name"]
+        markup = data["name"]
         return cls(markup, data)
 
 
@@ -208,7 +197,7 @@ class TopicInfoBox(InfoBox):
             return cls([])
 
         widgets = [
-            urwid.Filler(urwid.Text(data['title']), valign="top"),
+            ("pack", urwid.Text(data['title'] + "\n")),
             urwid.Filler(urwid.Text(data["content"] or data["link"]), valign="top"),
         ]
         return cls(widgets)
@@ -286,3 +275,35 @@ class TopicView(ContentView):
         sidebar = cls.build_sidebar(data)
         infobox = cls.build_infobox(data[0] if data else None)
         return cls(sidebar, infobox)
+
+
+class MainView(SquigglyBaseWidget, urwid.Frame):
+    keymap = KeyMap()
+    signals = ["select"]
+
+    def __init__(self):
+        self.topics = TopicView.from_data()
+        self.groups = GroupView.from_data()
+
+        header = Header("squiggly")
+        footer = Header(squiggly.__version__)
+        super().__init__(self.groups, header, footer)
+
+    def load_topics(self, data=None):
+        self.topics = TopicView.from_data(data)
+        self.body = self.topics
+
+    def load_groups(self, data=None):
+        self.groups = GroupView.from_data(data)
+        self.body = self.groups
+
+    @keymap.register("esc")
+    def on_escape(self):
+        if isinstance(self.body, TopicView):
+            self.body = self.groups
+
+    @keymap.register("enter")
+    def on_enter(self):
+        index = self.body.contents[0][0].body.body.focus
+        data = self.body.contents[0][0].body.body[index].data
+        self._emit("select", data)

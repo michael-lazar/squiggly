@@ -2,7 +2,7 @@ import urwid
 
 from squiggly.api import Client
 from squiggly.theme import palette
-from squiggly.widgets import GroupView, TopicView
+from squiggly.widgets import MainView
 
 
 def main():
@@ -14,11 +14,16 @@ def main():
 
     client = Client()
 
-    # group_data_list = client.list_groups()
-    # view = GroupView.from_data(group_data_list)
+    view = MainView()
 
-    topic_data_list = client.list_topics()
-    view = TopicView.from_data(topic_data_list)
+    groups = client.list_groups()
+    view.load_groups(groups)
+
+    def on_select(widget, focus_data):
+        data = client.list_topics(focus_data['name'])
+        widget.load_topics(data)
+
+    urwid.connect_signal(view, "select", on_select)
 
     event_loop = urwid.SelectEventLoop()
     main_loop = urwid.MainLoop(view, palette, event_loop=event_loop)

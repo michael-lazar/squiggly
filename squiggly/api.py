@@ -14,7 +14,7 @@ class Client:
     def _parse_group(self, group):
         data = {}
         data["desc"] = group.desc
-        data["name"] = group.name
+        data["name"] = f"~{group.name}"
         data["num_subscribers"] = group.num_subscribers
         data["subscribed"] = group.subscribed
         return data
