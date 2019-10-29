@@ -1,42 +1,41 @@
-"""
-Widget Cheatsheet:
-
-http://urwid.org/manual/widgets.html
-
-A container widget contains other widgets, and is responsible for the size and
-position of their child widgets. They must also determine which (if any) of
-their child widgets is currently in-focus.
-
-How a widget's size is determined:
-
-    Box widgets are given the exact number of rows and columns to fill. The
-    topmost widgets is always a box widget and it gets it's size from the
-    screen.
-
-    Flow widgets are given a number of available columns from their parent, and
-    then they determine the number of rows necessary to display their content.
-
-    Fixed widgets are not given either the number of available rows or columns.
-    They calculate the exact size that they need to display.
-
-Decoration widgets alter the attributes or appearance of a single widget. The
-widget that they wrap is available using the `original_widget` property.
-"""
 import urwid
 
 
-def rainbow_background():
-    while True:
-        for i in range(1, 7):
-            yield urwid.AttrSpec(f"h{i},standout", "default"), urwid.AttrSpec(f"h{i}", "default")
+class KeyboardMapper:
 
+    def __init__(self):
+        self.map = {}
 
-rainbow_background_gen = rainbow_background()
+    def __contains__(self, item):
+        return self.map.__contains__(item)
+
+    def __getitem__(self, item):
+        return self.map.__getitem__(item)
+
+    def register(self, *keys):
+        def wrap_method(method):
+            for key in keys:
+                self.map[key] = method
+            return method
+        return wrap_method
 
 
 class SquigglyBaseWidget(urwid.Widget):
+    """
+    Adds some helpful custom properties to base urwid Widget.
+
+    default attributes:
+        attr_name and focus_name define default theme groups that will be
+        applied to the widget's canvas. This provides is a simple alternative
+        to needing to wrap the widget with AttrMap() after creating it.
+
+    keyboard_mapper:
+        The keyboard mapper is a lightweight decorator that can be used to bind
+        a function to an individual keypress.
+    """
     attr_name = None
     focus_name = None
+    keyboard_mapper = KeyboardMapper()
 
     def render(self, size, focus=False):
         if focus and self.focus_name is not None:
@@ -52,6 +51,15 @@ class SquigglyBaseWidget(urwid.Widget):
             canvas.fill_attr_apply(attr_map)
         return canvas
 
+    def keypress(self, size, key):
+        if key in self.keyboard_mapper:
+            self.keyboard_mapper[key](self)
+        else:
+            try:
+                return super().keypress(size, key)
+            except AttributeError:
+                return key
+
     @classmethod
     def from_data(cls, data=None):
         return cls()
@@ -59,18 +67,16 @@ class SquigglyBaseWidget(urwid.Widget):
 
 class ListItem(SquigglyBaseWidget, urwid.Text):
     _selectable = True
-
+    keyboard_mapper = KeyboardMapper()
     signals = ["select"]
 
     def __init__(self, markup, data=None):
         self.data = data
         super().__init__(markup, wrap="clip")
 
-    def keypress(self, size, key):
-        if key == "enter":
-            self._emit("select")
-        else:
-            return key
+    @keyboard_mapper.register("enter")
+    def on_enter(self):
+        self._emit("select")
 
     def text_width(self):
         """
@@ -81,6 +87,7 @@ class ListItem(SquigglyBaseWidget, urwid.Text):
 
 class Header(SquigglyBaseWidget, urwid.Text):
     def __init__(self, markdown):
+        self.width = len(markdown) + 1
         super().__init__(markdown, wrap="clip")
 
 
@@ -95,7 +102,7 @@ class Sidebar(SquigglyBaseWidget, urwid.ListBox):
 
     def __init__(self, list_walker):
         width_gen = (x.text_width() for x in list_walker)
-        width = max(width_gen, default=self.width_default)
+        width = max(width_gen, default=self.width_default) + 1
         self.width = width
 
         list_walker.set_focus_changed_callback(self.on_focus_change)
@@ -107,7 +114,8 @@ class Sidebar(SquigglyBaseWidget, urwid.ListBox):
 
 class ContentView(urwid.Columns):
     def __init__(self, sidebar, infobox):
-        super().__init__([(sidebar.body.width, sidebar), infobox])
+        sidebar_with = max((sidebar.body.width, sidebar.header.width))
+        super().__init__([(sidebar_with, sidebar), infobox])
         urwid.connect_signal(sidebar.body, "on_focus_change", self.set_infobox)
 
     def set_infobox(self, _, data):
@@ -130,7 +138,7 @@ class GroupListItem(ListItem):
         if not data:
             cls("", data)
 
-        markup = data["name"]
+        markup = '~' + data["name"]
         return cls(markup, data)
 
 
@@ -143,7 +151,7 @@ class TopicListItem(ListItem):
         if not data:
             cls("", data)
 
-        markup = data["timestamp"].isoformat(" ")
+        markup = data["id36"]
         return cls(markup, data)
 
 
@@ -152,10 +160,7 @@ class GroupInfoBoxHeader(Header):
 
     @classmethod
     def from_data(cls, data=None):
-        if not data:
-            return cls("")
-
-        return cls(data["name"])
+        return cls("")
 
 
 class TopicInfoBoxHeader(Header):
@@ -163,10 +168,7 @@ class TopicInfoBoxHeader(Header):
 
     @classmethod
     def from_data(cls, data=None):
-        if not data:
-            return cls("")
-
-        return cls(data["title"])
+        return cls("")
 
 
 class GroupSidebarHeader(Header):
@@ -205,8 +207,10 @@ class TopicInfoBox(InfoBox):
         if not data:
             return cls([])
 
-        body = data["content"] or data["link"]
-        widgets = [urwid.Filler(urwid.Text(body), valign="top")]
+        widgets = [
+            urwid.Filler(urwid.Text(data['title']), valign="top"),
+            urwid.Filler(urwid.Text(data["content"] or data["link"]), valign="top"),
+        ]
         return cls(widgets)
 
 

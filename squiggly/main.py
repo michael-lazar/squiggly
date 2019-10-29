@@ -14,15 +14,19 @@ def main():
 
     client = Client()
 
-    group_data_list = client.list_groups()
-    view = GroupView.from_data(group_data_list)
+    # group_data_list = client.list_groups()
+    # view = GroupView.from_data(group_data_list)
 
-    # topic_data_list = client.list_topics()
-    # view = TopicView.from_data(topic_data_list)
+    topic_data_list = client.list_topics()
+    view = TopicView.from_data(topic_data_list)
 
     event_loop = urwid.SelectEventLoop()
     main_loop = urwid.MainLoop(view, palette, event_loop=event_loop)
-    main_loop.run()
+
+    try:
+        main_loop.run()
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
