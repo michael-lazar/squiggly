@@ -13,6 +13,7 @@ class Client:
 
     def _parse_group(self, group):
         data = {}
+        data["type"] = "group"
         data["desc"] = group.desc
         data["name"] = f"~{group.name}"
         data["num_subscribers"] = group.num_subscribers
@@ -21,6 +22,7 @@ class Client:
 
     def _parse_topic(self, topic):
         data = {}
+        data["type"] = "topic"
         data["author"] = topic.author
         data["group"] = topic.group
         data["id36"] = topic.id36

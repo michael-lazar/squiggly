@@ -13,17 +13,16 @@ def main():
     urwid.command_map["l"] = urwid.CURSOR_RIGHT
 
     client = Client()
-
     view = MainView()
 
-    groups = client.list_groups()
-    view.load_groups(groups)
+    data = client.list_groups()
+    view.load_groups_page(data)
 
-    def on_select(widget, focus_data):
-        data = client.list_topics(focus_data['name'])
-        widget.load_topics(data)
+    def on_select_group(widget):
+        data = client.list_topics(widget.focus_data['name'])
+        widget.load_topics_page(data)
 
-    urwid.connect_signal(view, "select", on_select)
+    urwid.connect_signal(view, "select_group", on_select_group)
 
     event_loop = urwid.SelectEventLoop()
     main_loop = urwid.MainLoop(view, palette, event_loop=event_loop)

@@ -1,18 +1,10 @@
 palette = [
-    ("group_list_item_normal", "default", "default"),
-    ("group_list_item_selected", "standout", "default"),
-    ("group_sidebar_normal", "default", "default"),
-    ("group_sidebar_selected", "default", "default"),
-    ("group_sidebar_header", "white,bold", "dark cyan"),
-    ("group_infobox_normal", "default", "default"),
-    ("group_infobox_selected", "default", "default"),
-    ("group_infobox_header", "white,bold", "dark magenta"),
-    ("topic_list_item_normal", "default", "default"),
-    ("topic_list_item_selected", "standout", "default"),
-    ("topic_sidebar_normal", "default", "default"),
-    ("topic_sidebar_selected", "default", "default"),
-    ("topic_sidebar_header", "white,bold", "dark cyan"),
-    ("topic_infobox_normal", "default", "default"),
-    ("topic_infobox_selected", "default", "default"),
-    ("topic_infobox_header", "white,bold", "dark magenta"),
+    ("header", "white,bold", "dark cyan"),
+    ("footer", "white,bold", "dark cyan"),
+
+    ("group_item", "default", "default"),
+    ("group_item_focus", "standout", "default"),
+
+    ("topic_item", "default", "default"),
+    ("topic_item_focus", "standout", "default"),
 ]
