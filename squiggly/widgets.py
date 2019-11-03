@@ -1,37 +1,20 @@
 import urwid
 
 
-class KeyMap:
-    """
-    A light interface around urwid's Widget.keypress() that uses a decorator
-    function to register a method with one or more keyboard keys.
-    """
-    def __init__(self):
-        self.map = {}
-
-    def __contains__(self, item):
-        return self.map.__contains__(item)
-
-    def __getitem__(self, item):
-        return self.map.__getitem__(item)
-
-    def register(self, *keys):
-        def wrap_method(method):
-            for key in keys:
-                self.map[key] = method
-            return method
-        return wrap_method
-
-
-class SquigglyBaseWidget(urwid.Widget):
+class EnhancedWidget(urwid.Widget):
     """
     Extend the urwid base Widget with some custom behavior.
     """
     attr_name = None
     focus_name = None
-    keymap = KeyMap()
 
     def render(self, size, focus=False):
+        """
+        Apply the class attr_name and focus_name on top of the widget canvas.
+
+        This is an alternative way of doing AttrMap(widget, ...) without
+        needing to wrap every instance of the class with an AttrMap.
+        """
         if focus and self.focus_name is not None:
             attr_map = {None: self.focus_name}
         elif self.attr_name:
@@ -45,174 +28,246 @@ class SquigglyBaseWidget(urwid.Widget):
             canvas.fill_attr_apply(attr_map)
         return canvas
 
-    def keypress(self, size, key):
-        if key in self.keymap:
-            self.keymap[key](self)
-            return  # Return `None` to indicate that the key was handled
+    def connect_signal(self, name, handler):
+        """
+        Shorthand to connect a signal to a handler function
+        """
+        urwid.connect_signal(self, name, handler)
 
-        try:
-            return super().keypress(size, key)
-        except AttributeError:
-            return key
+    def forward_signal(self, name, new_widget, new_name, replace_args=False):
+        """
+        Shorthand to forward a signal to another widget.
+        """
+        def handler(*args):
+            if replace_args:
+                urwid.emit_signal(new_widget, new_name, new_widget)
+            else:
+                urwid.emit_signal(new_widget, new_name, *args)
+        urwid.connect_signal(self, name, handler)
+
+    def emit_signal(self, name):
+        """
+        Really, I just don't like how Widget._emit is named.
+        """
+        self._emit(name)
 
 
-class DataFrame:
-    _selectable = True
-
-    def __init__(self, *args, data=None, **kwargs):
+class DataWidget(urwid.WidgetWrap):
+    """
+    Widget wrapper that additionally stores data representing the widget.
+    """
+    def __init__(self, widget, data=None):
         self.data = data
-        super().__init__(*args, **kwargs)
-
-    @classmethod
-    def from_data(cls, data):
-        raise NotImplementedError
+        super().__init__(widget)
 
 
-class BaseText(SquigglyBaseWidget, urwid.Text):
-    pass
-
-
-class BaseFrame(SquigglyBaseWidget, urwid.Frame):
-    pass
-
-
-class BaseListBox(SquigglyBaseWidget, urwid.ListBox):
-    signals = [
-        "change_focus",  # A new item has been selected
-    ]
-
-    def __init__(self, list_walker):
-        list_walker.set_focus_changed_callback(self.on_focus_change)
-        super().__init__(list_walker)
-
-    def on_focus_change(self, index):
-        self._emit("change_focus", self.body[index])
-
-
-class Header(BaseText):
+class Header(EnhancedWidget, urwid.Text):
     attr_name = "header"
 
     def __init__(self, markdown):
         super().__init__(markdown, wrap="clip")
 
 
-class Footer(BaseText):
+class Footer(EnhancedWidget, urwid.Text):
     attr_name = "footer"
 
     def __init__(self, markdown):
         super().__init__(markdown, wrap="clip")
 
 
-class GroupItem(DataFrame, BaseText):
+class ListItem(EnhancedWidget, DataWidget):
+    signals = ["select"]
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        if key in ("enter", "right"):
+            self.emit_signal("select")
+        else:
+            return key
+
+
+class GroupItem(ListItem):
     attr_name = "group_item"
     focus_name = "group_item_focus"
 
-    @classmethod
-    def from_data(cls, data):
-        markup = [
-            data['name'],
-            "\n",
-            data["desc"],
-        ]
-        return cls(markup, data=data)
+    def __init__(self, data):
+        widget = urwid.Text([data['name'], "\n", data["desc"]])
+        super().__init__(widget, data)
 
 
-class TopicItem(DataFrame, BaseText):
+class TopicItem(ListItem):
     attr_name = "topic_item"
     focus_name = "topic_item_focus"
 
-    @classmethod
-    def from_data(cls, data):
-        markup = [
-            data["title"],
-        ]
-        return cls(markup, data=data)
+    def __init__(self, data):
+        widget = urwid.Text([data["title"]])
+        super().__init__(widget, data)
 
 
-class CommentItem(DataFrame, BaseText):
+class CommentItem(ListItem):
+    attr_name = "comment_item"
+    focus_name = "comment_item_focus"
 
-    @classmethod
-    def from_data(cls, data):
-        return cls(None, data=data)
-
-
-class PartialTopicItem(DataFrame, BaseText):
-
-    @classmethod
-    def from_data(cls, data):
-        return cls(None, data=data)
+    def __init__(self, data):
+        widget = urwid.Text([data['content'] or ''])
+        super().__init__(widget, data)
 
 
-class PartialCommentItem(DataFrame, BaseText):
+class LoadItem(ListItem):
+    attr_name = "load_item"
+    focus_name = "load_item_focus"
 
-    @classmethod
-    def from_data(cls, data):
-        return cls(None, data=data)
-
-
-class GroupListBox(DataFrame, BaseListBox):
-
-    @classmethod
-    def from_data(cls, data_list):
-        items = []
-        for index, data in enumerate(data_list, start=1):
-            data["index"] = index
-            item = GroupItem.from_data(data)
-            items.append(item)
-            if index < len(data_list):
-                items.append(urwid.Divider())
-
-        list_walker = urwid.SimpleFocusListWalker(items)
-        return cls(list_walker, data=data_list)
+    def __init__(self):
+        widget = urwid.Text("Load...")
+        super().__init__(widget)
 
 
-class TopicListBox(DataFrame, BaseListBox):
-
-    @classmethod
-    def from_data(cls, data_list):
-        items = []
-        for index, data in enumerate(data_list, start=1):
-            data["index"] = index
-            item = TopicItem.from_data(data)
-            items.append(item)
-            if index < len(data_list):
-                items.append(urwid.Divider())
-
-        list_walker = urwid.SimpleFocusListWalker(items)
-        return cls(list_walker, data=data_list)
-
-
-class MainView(BaseFrame):
-    keymap = KeyMap()
+class ListBox(EnhancedWidget, DataWidget):
     signals = [
-        "select_group"
+        "close",
+    ]
+
+    def keypress(self, size, key):
+        if key == "left":
+            self.emit_signal("close")
+        else:
+            return super().keypress(size, key)
+
+
+class TopicListBox(ListBox):
+    signals = [
+        "select",
+        "more",
+    ]
+
+    def __init__(self, data):
+        topics = data.setdefault("topics", [])
+        list_items = self.build_list_items(topics)
+        widget = urwid.ListBox(urwid.SimpleFocusListWalker(list_items))
+        super().__init__(widget, data)
+
+    def build_list_items(self, topics):
+        items = []
+        for data in topics:
+            topic_item = TopicItem(data)
+            topic_item.forward_signal("select", self, "select")
+            items.append(topic_item)
+            items.append(urwid.Divider())
+
+        if topics:
+            load_item = LoadItem()
+            load_item.forward_signal("select", self, "more", replace_args=True)
+            items.append(load_item)
+
+        return items
+
+    def load_more(self, data):
+        topics = data.setdefault("topics", [])
+        self._w.body[-1:] = self.build_list_items(topics)
+        self.data["last"] = topics[-1]["id36"] if topics else None
+
+
+class GroupListBox(ListBox):
+    signals = [
+        "select",
+    ]
+
+    def __init__(self, data):
+        groups = data.setdefault("groups", [])
+        list_items = self.build_list_items(groups)
+        widget = urwid.ListBox(urwid.SimpleFocusListWalker(list_items))
+        super().__init__(widget, data)
+
+    def build_list_items(self, groups):
+        items = []
+        for data in groups:
+            group_item = GroupItem(data)
+            group_item.forward_signal("select", self, "select")
+            items.append(group_item)
+            items.append(urwid.Divider())
+        return items
+
+
+class CommentListBox(ListBox):
+    signals = [
+        "select",
+    ]
+
+    def __init__(self, data):
+        comments = data.setdefault("comments", [])
+        list_items = self.build_list_items(comments)
+        widget = urwid.ListBox(urwid.SimpleFocusListWalker(list_items))
+        super().__init__(widget, data)
+
+    def build_list_items(self, comments):
+        items = []
+        for data in comments:
+            comment_item = CommentItem(data)
+            comment_item.forward_signal("select", self, "select")
+            items.append(comment_item)
+            items.append(urwid.Divider())
+        return items
+
+
+class SquigglyView(EnhancedWidget, urwid.Frame):
+    signals = [
+        "group_select",
+        "topic_select",
+        "topic_more",
+        "topic_close",
+        "comment_close",
     ]
 
     def __init__(self):
-        self.group_view = GroupListBox.from_data([])
-        self.topic_view = TopicListBox.from_data([])
-
         header = Header("Header")
         footer = Footer("Footer")
+        self.topic_view = TopicListBox({})
+        self.group_view = GroupListBox({})
+        self.comment_view = CommentListBox({})
         super().__init__(self.group_view, header, footer)
 
-    def load_topics_page(self, data_list):
-        self.body = self.topic_view = TopicListBox.from_data(data_list)
+    @property
+    def topic_view(self):
+        return self._topic_view
 
-    def load_groups_page(self, data_list):
-        self.body = self.group_view = GroupListBox.from_data(data_list)
+    @topic_view.setter
+    def topic_view(self, topic_listbox):
+        topic_listbox.forward_signal("select", self, "topic_select")
+        topic_listbox.forward_signal("more", self, "topic_more")
+        topic_listbox.connect_signal("close", self.on_topic_close)
+        self._topic_view = topic_listbox
 
     @property
-    def focus_data(self):
-        if self.body.focus:
-            return self.body.focus.data
+    def group_view(self):
+        return self._group_view
 
-    @keymap.register("esc")
-    def on_escape(self):
-        if self.body == self.topic_view:
-            self.body = self.group_view
+    @group_view.setter
+    def group_view(self, group_listbox):
+        group_listbox.forward_signal("select", self, "group_select")
+        self._group_view = group_listbox
 
-    @keymap.register("enter")
-    def on_enter(self):
-        if self.body == self.group_view:
-            self._emit("select_group")
+    @property
+    def comment_view(self):
+        return self._comment_view
+
+    @comment_view.setter
+    def comment_view(self, comment_listbox):
+        comment_listbox.connect_signal("close", self.on_comment_close)
+        self._comment_view = comment_listbox
+
+    def load_topic_view(self, data):
+        self.body = self.topic_view = TopicListBox(data)
+
+    def load_group_view(self, data):
+        self.body = self.group_view = GroupListBox(data)
+
+    def load_comment_view(self, data):
+        self.body = self.comment_view = CommentListBox(data)
+
+    def on_topic_close(self, *_):
+        self.body = self.group_view
+
+    def on_comment_close(self, *_):
+        self.body = self.topic_view

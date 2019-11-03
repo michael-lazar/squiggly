@@ -20,7 +20,6 @@ setuptools.setup(
     python_requires=">=3.7",
     install_requires=[
         "urwid>=2.0.0",
-        "html2text",
         "tildee@git+https://github.com/michael-lazar/tildee",
     ],
     extras_require={"test": ["pytest", "black", "isort", "flake8"]},

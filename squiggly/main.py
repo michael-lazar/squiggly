@@ -2,7 +2,7 @@ import urwid
 
 from squiggly.api import Client
 from squiggly.theme import palette
-from squiggly.widgets import MainView
+from squiggly.widgets import SquigglyView
 
 
 def main():
@@ -13,16 +13,31 @@ def main():
     urwid.command_map["l"] = urwid.CURSOR_RIGHT
 
     client = Client()
-    view = MainView()
 
-    data = client.list_groups()
-    view.load_groups_page(data)
+    view = SquigglyView()
+    view.load_group_view(client.list_groups())
 
-    def on_select_group(widget):
-        data = client.list_topics(widget.focus_data['name'])
-        widget.load_topics_page(data)
+    def on_select_group(group_item):
+        name = group_item.data["name"]
+        data = client.list_topics(name)
+        view.load_topic_view(data)
 
-    urwid.connect_signal(view, "select_group", on_select_group)
+    def on_topic_more(topic_listbox):
+        group = topic_listbox.data["group"]
+        after = topic_listbox.data["last"]
+        order = topic_listbox.data["order"]
+        period = topic_listbox.data["period"]
+        data = client.list_topics(group, after, order, period)
+        topic_listbox.load_more(data)
+
+    def on_topic_select(topic_listbox):
+        topic_id = topic_listbox.data["id36"]
+        data = client.get_topic(topic_id)
+        view.load_comment_view(data)
+
+    view.connect_signal("group_select", on_select_group)
+    view.connect_signal("topic_more", on_topic_more)
+    view.connect_signal("topic_select", on_topic_select)
 
     event_loop = urwid.SelectEventLoop()
     main_loop = urwid.MainLoop(view, palette, event_loop=event_loop)
