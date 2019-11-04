@@ -1,4 +1,45 @@
+"""
+            How a Widget’s Size is Determined
+|-------------|------------------------|------------------------|
+| sizing mode |         width          |        height          |
+|-------------|------------------------|------------------------|
+| 'box'       | container decides      | container decides      |
+| 'flow'      | container decides      | widget’s rows() method |
+| 'fixed'     | widget’s pack() method | widget’s pack() method |
+|-------------|------------------------|------------------------|
+"""
 import urwid
+
+
+class RepeatedTextFill(urwid.Widget):
+    """
+    A widget that fills the screen with a single line of text.
+
+    This is intended to be used like a SolidFill but with more than one
+    character. Unicode characters with != 1 width are not supported, because
+    urwid's text layout library make my head spin.
+    """
+    _sizing = frozenset([urwid.BOX])
+    _selectable = False
+    ignore_focus = True
+
+    def __init__(self, fill_text, line_offset=-1):
+        self.__super.__init__()
+        self.fill_text = fill_text
+        self.line_offset = line_offset
+
+    def render(self, size, focus=False):
+        max_col, max_row = size
+
+        text_buffer = self.fill_text * (max_col // len(self.fill_text) + 2)
+
+        text = []
+        for i in range(max_row):
+            offset = (self.line_offset * i) % len(self.fill_text)
+            text.append(text_buffer[offset:offset+max_col])
+
+        raw_text = [line.encode() for line in text]
+        return urwid.TextCanvas(raw_text, maxcol=max_col, check_width=False)
 
 
 class EnhancedWidget(urwid.Widget):
@@ -52,6 +93,23 @@ class EnhancedWidget(urwid.Widget):
         self._emit(name)
 
 
+class WTFPile(urwid.Pile):
+
+    @property
+    def focus_item(self):
+        class Mock:
+            def __eq__(self, other):
+                return True
+        return Mock()
+
+
+class Background(EnhancedWidget, RepeatedTextFill):
+    attr_name = "background"
+
+    def __init__(self):
+        super().__init__(" ")
+
+
 class DataWidget(urwid.WidgetWrap):
     """
     Widget wrapper that additionally stores data representing the widget.
@@ -93,7 +151,11 @@ class GroupItem(ListItem):
     focus_name = "group_item_focus"
 
     def __init__(self, data):
-        widget = urwid.Text([data['name'], "\n", data["desc"]])
+        name = urwid.Text(data['name'], wrap="clip")
+        name = urwid.AttrMap(name, "group_item_name", "group_item_focus")
+        desc = urwid.Padding(urwid.Text(data["desc"]), left=4)
+        desc = urwid.AttrMap(desc, "group_item_desc", "group_item_focus")
+        widget = WTFPile([("pack", name), ("pack", desc)])
         super().__init__(widget, data)
 
 
@@ -211,7 +273,7 @@ class CommentListBox(ListBox):
         return items
 
 
-class SquigglyView(EnhancedWidget, urwid.Frame):
+class SquigglyView(EnhancedWidget, urwid.WidgetWrap):
     signals = [
         "group_select",
         "topic_select",
@@ -221,12 +283,22 @@ class SquigglyView(EnhancedWidget, urwid.Frame):
     ]
 
     def __init__(self):
-        header = Header("Header")
-        footer = Footer("Footer")
+        self.header = Header("Header")
+        self.footer = Footer("Footer")
         self.topic_view = TopicListBox({})
         self.group_view = GroupListBox({})
         self.comment_view = CommentListBox({})
-        super().__init__(self.group_view, header, footer)
+        self.frame = urwid.Frame(self.group_view, self.header, self.footer)
+        self.background = Background()
+        self.overlay = urwid.Overlay(
+            top_w=self.frame,
+            bottom_w=self.background,
+            align="center",
+            width=120,
+            valign="middle",
+            height=100,
+        )
+        super().__init__(self.overlay)
 
     @property
     def topic_view(self):
@@ -258,16 +330,16 @@ class SquigglyView(EnhancedWidget, urwid.Frame):
         self._comment_view = comment_listbox
 
     def load_topic_view(self, data):
-        self.body = self.topic_view = TopicListBox(data)
+        self.frame.body = self.topic_view = TopicListBox(data)
 
     def load_group_view(self, data):
-        self.body = self.group_view = GroupListBox(data)
+        self.frame.body = self.group_view = GroupListBox(data)
 
     def load_comment_view(self, data):
-        self.body = self.comment_view = CommentListBox(data)
+        self.frame.body = self.comment_view = CommentListBox(data)
 
     def on_topic_close(self, *_):
-        self.body = self.group_view
+        self.frame.body = self.group_view
 
     def on_comment_close(self, *_):
-        self.body = self.topic_view
+        self.frame.body = self.topic_view
