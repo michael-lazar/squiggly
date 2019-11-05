@@ -1,11 +1,13 @@
 palette = [
     ("header", "white,bold", "dark cyan"),
     ("footer", "white,bold", "dark cyan"),
-    ("background", "white", "dark magenta"),
+    ("background", "white", "dark gray"),
 
-    ("group_item", "default", "default"),
-    ("group_item_name", "bold", "default"),
-    ("group_item_desc", "light gray", "default"),
+    ("group_listbox", "black", "brown"),
+    ("group_item_outer", "black", "dark gray"),
+    ("group_item_inner", "black", "yellow"),
+    ("group_item_name", "black", "yellow"),
+    ("group_item_desc", "black", "yellow"),
     ("group_item_focus", "standout", "default"),
 
     ("topic_item", "default", "default"),
