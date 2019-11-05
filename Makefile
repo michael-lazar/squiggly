@@ -13,7 +13,7 @@ test:
 lint:
 	black --line-length 100 -t py37 setup.py tests squiggly
 	isort -y -rc setup.py tests squiggly
-	flake8 --max-line-length=100 setup.py test squiggly
+	flake8 --max-line-length=100 --ignore=E203 setup.py test squiggly
 
 clean:
 	find . -name "*pyc" | xargs rm -rf $1

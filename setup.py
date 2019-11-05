@@ -18,10 +18,7 @@ setuptools.setup(
     keywords="terminal console tui curses",
     packages=["squiggly"],
     python_requires=">=3.7",
-    install_requires=[
-        "urwid>=2.0.0",
-        "tildee@git+https://github.com/michael-lazar/tildee",
-    ],
+    install_requires=["urwid>=2.0.0", "tildee@git+https://github.com/michael-lazar/tildee"],
     extras_require={"test": ["pytest", "black", "isort", "flake8"]},
     entry_points={"console_scripts": ["squiggly=squiggly.main:main"]},
     classifiers=[

@@ -38,9 +38,8 @@ class ListItem(widgets.EnhancedWidget, widgets.DataWidget):
 
 
 class GroupItem(ListItem):
-
     def __init__(self, data):
-        name = urwid.Padding(urwid.Text(data['name'], wrap="clip"), left=0)
+        name = urwid.Padding(urwid.Text(data["name"], wrap="clip"), left=0)
         name = urwid.AttrMap(name, "group_item_name")
         desc = urwid.Padding(urwid.Text(data["desc"]), left=4)
         desc = urwid.AttrMap(desc, "group_item_desc")
@@ -64,7 +63,7 @@ class CommentItem(ListItem):
     focus_name = "comment_item_focus"
 
     def __init__(self, data):
-        widget = urwid.Text([data['content'] or ''])
+        widget = urwid.Text([data["content"] or ""])
         super().__init__(widget, data)
 
 
@@ -78,9 +77,7 @@ class LoadItem(ListItem):
 
 
 class ListBox(widgets.EnhancedWidget, widgets.DataWidget):
-    signals = [
-        "close",
-    ]
+    signals = ["close"]
 
     def keypress(self, size, key):
         if key == "left":
@@ -90,10 +87,7 @@ class ListBox(widgets.EnhancedWidget, widgets.DataWidget):
 
 
 class TopicListBox(ListBox):
-    signals = [
-        "select",
-        "more",
-    ]
+    signals = ["select", "more"]
 
     def __init__(self, data):
         topics = data.setdefault("topics", [])
@@ -123,9 +117,7 @@ class TopicListBox(ListBox):
 
 class GroupListBox(ListBox):
     attr_name = "group_listbox"
-    signals = [
-        "select",
-    ]
+    signals = ["select"]
 
     def __init__(self, data):
         groups = data.setdefault("groups", [])
@@ -143,9 +135,7 @@ class GroupListBox(ListBox):
 
 
 class CommentListBox(ListBox):
-    signals = [
-        "select",
-    ]
+    signals = ["select"]
 
     def __init__(self, data):
         comments = data.setdefault("comments", [])
@@ -163,13 +153,7 @@ class CommentListBox(ListBox):
 
 
 class SquigglyView(widgets.EnhancedWidget, urwid.WidgetWrap):
-    signals = [
-        "group_select",
-        "topic_select",
-        "topic_more",
-        "topic_close",
-        "comment_close",
-    ]
+    signals = ["group_select", "topic_select", "topic_more", "topic_close", "comment_close"]
 
     def __init__(self):
         self.header = Header("Header")

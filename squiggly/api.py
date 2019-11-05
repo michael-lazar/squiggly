@@ -4,7 +4,6 @@ from tildee import TildesClient
 
 
 class Client:
-
     def __init__(self):
         self._client = TildesClient(user_agent="michael-lazar/squiggly", ratelimit=0)
 

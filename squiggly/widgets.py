@@ -9,8 +9,8 @@
 |-------------|------------------------|------------------------|
 """
 import logging
-import urwid
 
+import urwid
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ class EnhancedWidget(urwid.Widget):
     """
     Extend the urwid base Widget with some custom behavior.
     """
+
     attr_name = None
     focus_name = None
 
@@ -29,7 +30,7 @@ class EnhancedWidget(urwid.Widget):
         This is an alternative way of doing AttrMap(widget, ...) without
         needing to wrap every instance of the class with an AttrMap.
         """
-        mode = ['FIXED', 'FLOW', 'BOX'][len(size)]
+        mode = ["FIXED", "FLOW", "BOX"][len(size)]
         logger.debug(f"Rendering {self} as {mode} (focus={focus})")
 
         if focus and self.focus_name is not None:
@@ -55,11 +56,13 @@ class EnhancedWidget(urwid.Widget):
         """
         Shorthand to forward a signal to another widget.
         """
+
         def handler(*args):
             if replace_args:
                 urwid.emit_signal(new_widget, new_name, new_widget)
             else:
                 urwid.emit_signal(new_widget, new_name, *args)
+
         urwid.connect_signal(self, name, handler)
 
     def emit_signal(self, name):
@@ -77,6 +80,7 @@ class RepeatedTextFill(urwid.Widget):
     character. Unicode characters with != 1 width are not supported, because
     urwid's text layout library make my head spin.
     """
+
     _sizing = frozenset([urwid.BOX])
     _selectable = False
     ignore_focus = True
@@ -94,7 +98,7 @@ class RepeatedTextFill(urwid.Widget):
         text = []
         for i in range(max_row):
             offset = (self.line_offset * i) % len(self.fill_text)
-            text.append(text_buffer[offset:offset+max_col])
+            text.append(text_buffer[offset : offset + max_col])
 
         raw_text = [line.encode() for line in text]
         return urwid.TextCanvas(raw_text, maxcol=max_col, check_width=False)
@@ -106,24 +110,27 @@ class BoxShadow(urwid.WidgetDecoration, urwid.WidgetWrap):
 
     Derived from urwid.LineBox, organic 100% cage-free.
     """
+
     def __init__(self, original_widget):
-        widget = urwid.Pile([
-            ("pack", urwid.Divider(" ")),
-            urwid.Columns([
+        top = urwid.Divider(" ")
+        middle = urwid.Columns(
+            [
                 ("fixed", 1, urwid.SolidFill(" ")),
                 original_widget,
-                ("fixed", 1, urwid.Pile([
-                    ("pack", urwid.Text("▖")),
-                    urwid.SolidFill("▌"),
-                ])),
-            ], box_columns=[0, 2], focus_column=1),
-            ("pack", urwid.Columns([
+                ("fixed", 1, urwid.Pile([("pack", urwid.Text("▖")), urwid.SolidFill("▌")])),
+            ],
+            box_columns=[0, 2],
+            focus_column=1,
+        )
+        bottom = urwid.Columns(
+            [
                 ("fixed", 1, urwid.Text(" ")),
                 ("fixed", 1, urwid.Text("▝")),
                 urwid.Divider("▀"),
                 ("fixed", 1, urwid.Text("▘")),
-            ]))
-        ])
+            ]
+        )
+        widget = urwid.Pile([("pack", top), middle, ("pack", bottom)])
         urwid.WidgetDecoration.__init__(self, original_widget)
         urwid.WidgetWrap.__init__(self, widget)
 
@@ -135,6 +142,7 @@ class SingleFocusPile(urwid.Pile):
     This class extends Pile to allow all child widgets to be rendered as if
     they were in focus, regardless of which widget is actually selected.
     """
+
     def render(self, size, focus=False):
         maxcol = size[0]
         item_rows = None
@@ -156,7 +164,7 @@ class SingleFocusPile(urwid.Pile):
             if canv:
                 combinelist.append((canv, i, item_focus))
         if not combinelist:
-            return urwid.SolidCanvas(" ", size[0], (size[1:]+(0,))[0])
+            return urwid.SolidCanvas(" ", size[0], (size[1:] + (0,))[0])
 
         out = urwid.CanvasCombine(combinelist)
         if len(size) == 2 and size[1] != out.rows():
@@ -170,6 +178,7 @@ class DataWidget(urwid.WidgetWrap):
     """
     Widget wrapper that additionally stores data representing the widget.
     """
+
     def __init__(self, widget, data=None):
         self.data = data
         super().__init__(widget)

@@ -6,12 +6,11 @@ from squiggly.api import Client
 from squiggly.theme import palette
 from squiggly.views import SquigglyView
 
-
 logger = logging.getLogger(__name__)
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG, filename='/tmp/squiggly.log')
+    logging.basicConfig(level=logging.DEBUG, filename="/tmp/squiggly.log")
 
     # Add movement using h/j/k/l to default command map
     urwid.command_map["k"] = urwid.CURSOR_UP
