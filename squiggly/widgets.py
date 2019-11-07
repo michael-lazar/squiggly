@@ -110,29 +110,32 @@ class BoxShadow(urwid.WidgetDecoration, urwid.WidgetWrap):
 
     Derived from urwid.LineBox, organic 100% cage-free.
     """
-
     def __init__(self, original_widget):
-        top = urwid.Divider(" ")
-        middle = urwid.Columns(
-            [
-                ("fixed", 1, urwid.SolidFill(" ")),
-                original_widget,
-                ("fixed", 1, urwid.Pile([("pack", urwid.Text("▖")), urwid.SolidFill("▌")])),
-            ],
-            box_columns=[0, 2],
-            focus_column=1,
+        right_shadow = urwid.Pile([("pack", urwid.Text("▖")), urwid.SolidFill("▌")])
+        box = urwid.Columns([original_widget, ("fixed", 1, right_shadow)], box_columns=[1])
+        bottom_shadow = urwid.Columns(
+            [("fixed", 1, urwid.Text("▝")), urwid.Divider("▀"), ("fixed", 1, urwid.Text("▘"))]
         )
-        bottom = urwid.Columns(
-            [
-                ("fixed", 1, urwid.Text(" ")),
-                ("fixed", 1, urwid.Text("▝")),
-                urwid.Divider("▀"),
-                ("fixed", 1, urwid.Text("▘")),
-            ]
-        )
-        widget = urwid.Pile([("pack", top), middle, ("pack", bottom)])
+        widget = urwid.Pile([box, ("pack", bottom_shadow)])
         urwid.WidgetDecoration.__init__(self, original_widget)
         urwid.WidgetWrap.__init__(self, widget)
+
+
+class BoxPadding(urwid.WidgetDecoration, urwid.WidgetWrap):
+    """
+    Pad a widget with an empty space on each side.
+    """
+    def __init__(self, original_widget, top=1, bottom=1, left=1, right=1):
+        widget = urwid.Padding(original_widget, align="left", left=left, right=right)
+        widget = urwid.Filler(widget, height=("relative", 100), top=top, bottom=bottom)
+        urwid.WidgetDecoration.__init__(self, original_widget)
+        urwid.WidgetWrap.__init__(self, widget)
+
+
+class BoxBorder(urwid.LineBox):
+
+    def format_title(self, text):
+        return text
 
 
 class SingleFocusPile(urwid.Pile):
@@ -142,7 +145,6 @@ class SingleFocusPile(urwid.Pile):
     This class extends Pile to allow all child widgets to be rendered as if
     they were in focus, regardless of which widget is actually selected.
     """
-
     def render(self, size, focus=False):
         maxcol = size[0]
         item_rows = None

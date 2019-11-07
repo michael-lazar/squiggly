@@ -7,7 +7,7 @@ class Background(widgets.EnhancedWidget, widgets.RepeatedTextFill):
     attr_name = "background"
 
     def __init__(self):
-        super().__init__(" ")
+        super().__init__(":-)      ", line_offset=4)
 
 
 class Header(widgets.EnhancedWidget, urwid.Text):
@@ -38,14 +38,12 @@ class ListItem(widgets.EnhancedWidget, widgets.DataWidget):
 
 
 class GroupItem(ListItem):
+
     def __init__(self, data):
-        name = urwid.Padding(urwid.Text(data["name"], wrap="clip"), left=0)
-        name = urwid.AttrMap(name, "group_item_name")
-        desc = urwid.Padding(urwid.Text(data["desc"]), left=4)
-        desc = urwid.AttrMap(desc, "group_item_desc")
-        widget = widgets.SingleFocusPile([("pack", name), ("pack", desc)])
-        widget = urwid.AttrMap(widget, "group_item_inner")
-        widget = widgets.BoxShadow(widget)
+        widget = urwid.Text(data["desc"])
+        widget = widgets.BoxBorder(widget, title=f"[{data['name']}]", title_align="left")
+        widget = urwid.AttrMap(widget, "group_item", "group_item_focus")
+        widget = urwid.AttrMap(widgets.BoxShadow(widget), "group_item_shadow")
         super().__init__(widget, data)
 
 
@@ -123,6 +121,7 @@ class GroupListBox(ListBox):
         groups = data.setdefault("groups", [])
         list_items = self.build_list_items(groups)
         widget = urwid.ListBox(urwid.SimpleFocusListWalker(list_items))
+        widget = widgets.BoxPadding(widget, top=0, bottom=0)
         super().__init__(widget, data)
 
     def build_list_items(self, groups):
@@ -156,8 +155,8 @@ class SquigglyView(widgets.EnhancedWidget, urwid.WidgetWrap):
     signals = ["group_select", "topic_select", "topic_more", "topic_close", "comment_close"]
 
     def __init__(self):
-        self.header = Header("Header")
-        self.footer = Footer("Footer")
+        self.header = urwid.AttrMap(widgets.BoxShadow(Header(" ~ Squiggly ~")), "group_item_shadow")
+        self.footer = urwid.AttrMap(widgets.BoxShadow(Footer("Stay frosty")), "group_item_shadow")
         self.topic_view = TopicListBox({})
         self.group_view = GroupListBox({})
         self.comment_view = CommentListBox({})
