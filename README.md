@@ -2,7 +2,7 @@
 
 A delightful terminal interface for tildes.net
 
-*(in progress)*
+*(in progress, please don't try to actually use this)*
 
 ## License
 
